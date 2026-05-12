@@ -25,3 +25,6 @@ logs/
 
 # Pytest
 .pytest_cache/
+
+# Executables
+*.exe
