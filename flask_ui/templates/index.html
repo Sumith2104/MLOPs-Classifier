@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupportIQ - AI Query Classification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SupportIQ Classifier</h1>
+            <p>Analyze customer support queries instantly using our fine-tuned BERT model.</p>
+        </header>
+
+        <main>
+            <div class="card form-card">
+                <form method="POST">
+                    <label for="query">Enter customer query:</label>
+                    <textarea name="query" id="query" rows="4" placeholder="e.g., My order arrived broken and I want a refund immediately!" required>{{ query }}</textarea>
+                    <button type="submit" class="btn">Analyze Query</button>
+                </form>
+            </div>
+
+            {% if error %}
+            <div class="card error-card">
+                <p>{{ error }}</p>
+            </div>
+            {% endif %}
+
+            {% if prediction %}
+            <div class="card results-card fade-in">
+                <h2>Prediction Results</h2>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="label">Intent</span>
+                        <span class="value badge badge-intent">{{ prediction.intent | capitalize }}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Priority</span>
+                        <span class="value badge badge-priority-{{ prediction.priority }}">{{ prediction.priority | capitalize }}</span>
+                    </div>
+                </div>
+
+                <div class="confidence-bars">
+                    <div class="bar-group">
+                        <div class="bar-header">
+                            <span>Intent Confidence</span>
+                            <span>{{ "%.1f"|format(prediction.intent_confidence * 100) }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: {{ prediction.intent_confidence * 100 }}%;"></div>
+                        </div>
+                    </div>
+                    <div class="bar-group">
+                        <div class="bar-header">
+                            <span>Priority Confidence</span>
+                            <span>{{ "%.1f"|format(prediction.priority_confidence * 100) }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: {{ prediction.priority_confidence * 100 }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</body>
+</html>

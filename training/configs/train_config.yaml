@@ -1,0 +1,35 @@
+# train_config.yaml
+# ------------------
+# Central configuration for BERT fine-tuning.
+# All training scripts read from this file via PyYAML.
+
+model:
+  name: bert-base-uncased
+  num_intent_labels: 3        # complaint / inquiry / feedback
+  num_priority_labels: 3      # high / medium / low
+  max_seq_length: 128
+  dropout: 0.1
+
+training:
+  learning_rate: 2.0e-5
+  epochs: 1
+  batch_size: 32
+  warmup_ratio: 0.1           # fraction of total steps used for LR warmup
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  seed: 42
+
+data:
+  train_csv: data/processed/train.csv
+  val_csv:   data/processed/val.csv
+  test_csv:  data/processed/test.csv
+
+output:
+  checkpoint_dir: training/checkpoints
+  best_model_dir: model/saved_model
+
+logging:
+  log_every_n_steps: 50
+
+inference:
+  confidence_threshold: 0.70  # below this → flagged for human review
