@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SupportIQ MLOps</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}">Predict</a>
+        <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
+    </nav>
+    <div class="container dashboard-container">
+        <header>
+            <h1>MLOps Dashboard</h1>
+            <p>System performance and learning loop controls.</p>
+        </header>
+
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="flash-messages">
+                {% for category, message in messages %}
+                  <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            <div class="kpi-grid">
+                <div class="card kpi-card">
+                    <div class="kpi-title">Total Predictions</div>
+                    <div class="kpi-value">{{ data.total }}</div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-title">Total Complaints</div>
+                    <div class="kpi-value kpi-complaint">{{ data.complaints }}</div>
+                </div>
+                <div class="card kpi-card">
+                    <div class="kpi-title">High Priority</div>
+                    <div class="kpi-value kpi-high">{{ data.high_priority }}</div>
+                </div>
+            </div>
+
+            <div class="card retrain-card">
+                <h2>Continuous Learning Loop</h2>
+                <p>Retrain the model using the latest user feedback to improve accuracy.</p>
+                <form action="{{ url_for('retrain') }}" method="POST">
+                    <button type="submit" class="btn btn-retrain">Trigger Model Retraining</button>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

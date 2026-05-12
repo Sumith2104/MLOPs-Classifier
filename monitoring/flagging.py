@@ -36,7 +36,23 @@ class FlagManager:
         return (intent_conf < self.threshold) or (priority_conf < self.threshold)
 
     def log_flagged(self, query: str, result: dict) -> None:
-        """Append a flagged prediction to the JSONL log file."""
+        """Append a flagged prediction to the JSONL log file and Supabase."""
+        
+        from api.database import get_supabase
+        db = get_supabase()
+        if db:
+            try:
+                db.table("flagged_predictions").insert({
+                    "query": query,
+                    "intent": result.get("intent"),
+                    "priority": result.get("priority"),
+                    "intent_confidence": result.get("intent_confidence"),
+                    "priority_confidence": result.get("priority_confidence"),
+                    "threshold": self.threshold
+                }).execute()
+            except Exception as e:
+                logger.error("Failed to log flagged prediction to Supabase", extra={"error": str(e)})
+
         record = {
             "timestamp":           datetime.now(timezone.utc).isoformat(),
             "query":               query,

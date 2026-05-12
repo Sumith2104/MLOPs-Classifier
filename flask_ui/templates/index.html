@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="active">Predict</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    </nav>
     <div class="container">
         <header>
             <h1>SupportIQ Classifier</h1>
@@ -15,6 +19,16 @@
         </header>
 
         <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="flash-messages">
+                {% for category, message in messages %}
+                  <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
             <div class="card form-card">
                 <form method="POST">
                     <label for="query">Enter customer query:</label>
@@ -63,6 +77,27 @@
                             <div class="progress" style="width: {{ prediction.priority_confidence * 100 }}%;"></div>
                         </div>
                     </div>
+                </div>
+                </div>
+
+                <div class="feedback-section">
+                    <p class="feedback-title">Incorrect Prediction?</p>
+                    <form action="{{ url_for('feedback') }}" method="POST" class="feedback-form">
+                        <input type="hidden" name="query" value="{{ query }}">
+                        <select name="expected_intent" class="input-select" required>
+                            <option value="" disabled selected>Select Correct Intent...</option>
+                            <option value="complaint">Complaint</option>
+                            <option value="inquiry">Inquiry</option>
+                            <option value="feedback">Feedback</option>
+                        </select>
+                        <select name="expected_priority" class="input-select" required>
+                            <option value="" disabled selected>Select Correct Priority...</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <button type="submit" class="btn btn-secondary btn-sm">Report Incorrect Prediction</button>
+                    </form>
                 </div>
             </div>
             {% endif %}

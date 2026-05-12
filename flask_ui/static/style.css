@@ -198,3 +198,110 @@ textarea:focus {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Navigation Bar */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    z-index: 1000;
+}
+.navbar a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+.navbar a:hover, .navbar a.active {
+    color: var(--text-main);
+}
+body { padding-top: 80px; } /* offset for fixed nav */
+
+/* Flash Messages */
+.flash-messages {
+    margin-bottom: 24px;
+}
+.flash-msg {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.flash-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.flash-error { background-color: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; }
+
+/* Dashboard KPI Grid */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.kpi-card {
+    text-align: center;
+    padding: 24px 16px;
+}
+.kpi-title {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+.kpi-value {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+.kpi-complaint { color: var(--intent-color); }
+.kpi-high { color: var(--priority-high); }
+
+/* Retrain / Feedback */
+.retrain-card h2 { margin-bottom: 8px; font-size: 1.1rem; }
+.retrain-card p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px; }
+.btn-retrain {
+    background-color: var(--intent-color);
+}
+.btn-retrain:hover { background-color: #1565c0; }
+.btn-secondary {
+    background-color: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+.btn-secondary:hover { background-color: #e0e0e0; }
+
+.feedback-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+}
+.feedback-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.feedback-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.input-select {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    flex: 1;
+    min-width: 140px;
+    background: #fff;
+}

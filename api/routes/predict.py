@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT))
 from api.schemas.query_schema import QueryRequest, PredictionResponse, HealthResponse
 from model.predictor import Predictor
 from monitoring.logger import get_logger
+from api.database import get_supabase
 from monitoring.flagging import FlagManager
 
 router = APIRouter()
@@ -80,6 +81,20 @@ def predict(request: QueryRequest):
     flag_manager.check_and_log(query, result)
 
     timestamp = datetime.now(timezone.utc).isoformat()
+
+    db = get_supabase()
+    if db:
+        try:
+            db.table("predictions").insert({
+                "query": query,
+                "intent": result["intent"],
+                "priority": result["priority"],
+                "intent_confidence": result["intent_confidence"],
+                "priority_confidence": result["priority_confidence"]
+            }).execute()
+        except Exception as exc:
+            logger.error("Failed to log to Supabase", extra={"error": str(exc)})
+
 
     logger.info(
         "Prediction complete",

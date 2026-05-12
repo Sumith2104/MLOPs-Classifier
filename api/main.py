@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes.predict import router as predict_router
+from api.routes.mlops import router as mlops_router
 
 app = FastAPI(
     title="Customer Support Query Classifier",
@@ -38,6 +39,7 @@ app.add_middleware(
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(predict_router, prefix="")
+app.include_router(mlops_router, prefix="")
 
 
 @app.get("/", tags=["Root"])
