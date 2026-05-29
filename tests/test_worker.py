@@ -18,9 +18,10 @@ class MockSupabaseExecute:
 @pytest.mark.anyio
 async def test_worker_processing_flow(monkeypatch):
     # Mock data returned by select().eq().limit().execute()
+    # Using 'message' column to match existing database schema
     mock_queries = [
-        {"id": "uuid-1", "query": "My order arrived broken."},
-        {"id": "uuid-2", "query": "What are your store hours?"}
+        {"id": "uuid-1", "message": "My order arrived broken."},
+        {"id": "uuid-2", "message": "What are your store hours?"}
     ]
     
     # Mock database queries and inserts
@@ -76,21 +77,23 @@ async def test_worker_processing_flow(monkeypatch):
         pass
         
     # Verify the database mock interactions
-    mock_db.table.assert_any_call("mlops_queries")
-    mock_table.select.assert_any_call("id, query")
+    mock_db.table.assert_any_call("queries")
+    mock_table.select.assert_any_call("id, message")
     mock_select.eq.assert_called_with("processed", False)
     
     # Verify rows were marked as processed
     mock_table.update.assert_called_with({"processed": True})
     mock_update.in_.assert_called_with("id", ["uuid-1", "uuid-2"])
     
-    # Verify predictions were written to mlops_classified_queries
-    mock_db.table.assert_any_call("mlops_classified_queries")
+    # Verify predictions were written to classified_queries
+    mock_db.table.assert_any_call("classified_queries")
     inserted_args = mock_table.insert.call_args[0][0]
     assert len(inserted_args) == 2
     assert inserted_args[0]["query_id"] == "uuid-1"
+    assert inserted_args[0]["message"] == "My order arrived broken."
     assert inserted_args[0]["intent"] == "complaint"
     assert inserted_args[0]["priority"] == "high"
     assert inserted_args[1]["query_id"] == "uuid-2"
+    assert inserted_args[1]["message"] == "What are your store hours?"
     assert inserted_args[1]["intent"] == "inquiry"
     assert inserted_args[1]["priority"] == "low"
