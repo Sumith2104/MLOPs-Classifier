@@ -10,11 +10,29 @@ Interactive docs:
     http://localhost:8000/docs
 """
 
+import asyncio
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes.predict import router as predict_router
 from api.routes.mlops import router as mlops_router
+from api.middleware.rate_limiter import RateLimiterMiddleware
+from api.routes.predict import warm_up_serving
+from api.worker import start_query_classifier_worker
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    warm_up_serving()
+    worker_task = asyncio.create_task(start_query_classifier_worker())
+    yield
+    # Shutdown
+    worker_task.cancel()
+    try:
+        await worker_task
+    except asyncio.CancelledError:
+        pass
 
 app = FastAPI(
     title="Customer Support Query Classifier",
@@ -26,6 +44,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
@@ -36,6 +55,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Rate Limiting ─────────────────────────────────────────────────────────────
+app.add_middleware(RateLimiterMiddleware)
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(predict_router, prefix="")

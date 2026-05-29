@@ -93,3 +93,91 @@ class TestPredictValidation:
     def test_query_too_short(self):
         resp = client.post("/predict", json={"query": "Hi"})
         assert resp.status_code == 422
+
+
+# ── Batch Predict ─────────────────────────────────────────────────────────────
+class TestBatchPredict:
+    def test_batch_valid_request_200(self):
+        resp = client.post(
+            "/predict/batch",
+            json={"queries": ["My product is damaged.", "Where is my refund?"]}
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "results" in body
+        assert body["total"] == 2
+        assert isinstance(body["results"], list)
+        assert len(body["results"]) == 2
+        for r in body["results"]:
+            assert "intent" in r
+            assert "priority" in r
+            assert "query" in r
+
+    def test_batch_empty_queries(self):
+        resp = client.post("/predict/batch", json={"queries": []})
+        assert resp.status_code == 422
+
+    def test_batch_duplicate_queries(self):
+        resp = client.post(
+            "/predict/batch",
+            json={"queries": ["My product is damaged.", "My product is damaged."]}
+        )
+        assert resp.status_code == 422
+
+    def test_batch_too_many_queries(self):
+        resp = client.post(
+            "/predict/batch",
+            json={"queries": [f"Query text {i}" for i in range(51)]}
+        )
+        assert resp.status_code == 422
+
+    def test_batch_query_too_short(self):
+        resp = client.post(
+            "/predict/batch",
+            json={"queries": ["Hi", "Where is my refund?"]}
+        )
+        assert resp.status_code == 422
+
+    def test_batch_concurrency_limit_429(self, monkeypatch):
+        from api.routes.predict import get_batch_semaphore
+        sem = get_batch_semaphore()
+        monkeypatch.setattr(sem, "locked", lambda: True)
+        
+        resp = client.post(
+            "/predict/batch",
+            json={"queries": ["My product is damaged.", "Where is my refund?"]}
+        )
+        assert resp.status_code == 429
+        assert "Too many concurrent batch requests" in resp.json()["detail"]
+
+    def test_batch_timeout_504(self, monkeypatch):
+        from model.predictor import Predictor
+        import time
+        def mock_predict_batch_slow(self, texts):
+            time.sleep(1.0)
+            return [{"intent": "complaint", "priority": "high", "intent_confidence": 0.9, "priority_confidence": 0.9, "flagged": False} for _ in texts]
+            
+        monkeypatch.setattr(Predictor, "predict_batch", mock_predict_batch_slow)
+        
+        from api.routes.predict import get_timeout_seconds
+        monkeypatch.setattr("api.routes.predict.get_timeout_seconds", lambda: 0.1)
+        
+        resp = client.post(
+            "/predict/batch",
+            json={"queries": ["My product is damaged.", "Where is my refund?"]}
+        )
+        assert resp.status_code == 504
+        assert "timed out" in resp.json()["detail"]
+
+    def test_rate_limiter_blocks_requests(self, monkeypatch):
+        from api.middleware.rate_limiter import InMemoryRateLimiter
+        original_is_allowed = InMemoryRateLimiter.is_allowed
+        monkeypatch.setattr(InMemoryRateLimiter, "is_allowed", lambda self, cid: (False, 30))
+        
+        try:
+            resp = client.post("/predict", json={"query": "My product arrived damaged."})
+            assert resp.status_code == 429
+            assert "Too many requests" in resp.json()["detail"]
+            assert resp.headers.get("Retry-After") == "30"
+        finally:
+            monkeypatch.setattr(InMemoryRateLimiter, "is_allowed", original_is_allowed)

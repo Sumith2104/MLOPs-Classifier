@@ -30,9 +30,10 @@
             {% endwith %}
 
             <div class="card form-card">
-                <form method="POST">
-                    <label for="query">Enter customer query:</label>
-                    <textarea name="query" id="query" rows="4" placeholder="e.g., My order arrived broken and I want a refund immediately!" required>{{ query }}</textarea>
+                <form method="POST" action="/" onsubmit="return validateForm()">
+                    <label for="queries">Enter customer queries (one per line for multiple queries, max 50):</label>
+                    <textarea name="queries" id="queries" rows="6" placeholder="e.g.,&#10;My order arrived broken and I want a refund immediately!&#10;How do I change my billing info?" required>{{ queries_raw or query or '' }}</textarea>
+                    <div id="validation-msg" class="validation-msg"></div>
                     <button type="submit" class="btn">Analyze Query</button>
                 </form>
             </div>
@@ -78,7 +79,6 @@
                         </div>
                     </div>
                 </div>
-                </div>
 
                 <div class="feedback-section">
                     <p class="feedback-title">Incorrect Prediction?</p>
@@ -101,7 +101,122 @@
                 </div>
             </div>
             {% endif %}
+
+            {% if batch_response %}
+            <div class="card results-card fade-in">
+                <h2>Batch Prediction Results</h2>
+                
+                <div class="batch-summary">
+                    <div class="summary-card total">
+                        <span class="summary-val">{{ batch_response.total }}</span>
+                        <span class="summary-lbl">Total Processed</span>
+                    </div>
+                    <div class="summary-card flagged">
+                        <span class="summary-val">{{ batch_response.flagged_count }}</span>
+                        <span class="summary-lbl">Flagged for Review</span>
+                    </div>
+                    <div class="summary-card time">
+                        <span class="summary-val">{{ "%.1f"|format(batch_response.processing_time_ms) }} ms</span>
+                        <span class="summary-lbl">Processing Time</span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="batch-table">
+                        <thead>
+                            <tr>
+                                <th>Query</th>
+                                <th>Intent (Confidence)</th>
+                                <th>Priority (Confidence)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in batch_response.results %}
+                            <tr class="{{ 'row-flagged' if item.flagged else '' }}">
+                                <td class="query-cell" title="{{ item.query }}">{{ item.query }}</td>
+                                {% if item.error %}
+                                <td colspan="2" class="error-cell">
+                                    <strong>Error:</strong> {{ item.error }}
+                                </td>
+                                {% else %}
+                                <td>
+                                    <span class="badge badge-intent">{{ item.intent | capitalize }}</span>
+                                    <div class="mini-progress-bar">
+                                        <div class="mini-progress" style="width: {{ (item.intent_confidence or 0) * 100 }}%;"></div>
+                                    </div>
+                                    <span class="conf-text">{{ "%.1f"|format((item.intent_confidence or 0) * 100) }}%</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-priority-{{ item.priority }}">{{ item.priority | capitalize }}</span>
+                                    <div class="mini-progress-bar">
+                                        <div class="mini-progress" style="width: {{ (item.priority_confidence or 0) * 100 }}%;"></div>
+                                    </div>
+                                    <span class="conf-text">{{ "%.1f"|format((item.priority_confidence or 0) * 100) }}%</span>
+                                </td>
+                                {% endif %}
+                                <td>
+                                    {% if item.flagged %}
+                                        {% if item.error %}
+                                        <span class="status-badge status-error">Error</span>
+                                        {% else %}
+                                        <span class="status-badge status-flagged">Flagged</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="status-badge status-clear">Clear</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
         </main>
     </div>
+
+    <script>
+        function validateForm() {
+            const textarea = document.getElementById('queries');
+            const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const msgDiv = document.getElementById('validation-msg');
+            
+            if (lines.length === 0) {
+                msgDiv.textContent = "Please enter at least one query.";
+                msgDiv.style.display = "block";
+                return false;
+            }
+            
+            if (lines.length > 50) {
+                msgDiv.textContent = `A maximum of 50 queries is allowed. You have entered ${lines.length}.`;
+                msgDiv.style.display = "block";
+                return false;
+            }
+            
+            const seen = new Set();
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].length < 3) {
+                    msgDiv.textContent = `Query at line ${i+1} is too short (min 3 characters).`;
+                    msgDiv.style.display = "block";
+                    return false;
+                }
+                if (lines[i].length > 512) {
+                    msgDiv.textContent = `Query at line ${i+1} is too long (max 512 characters).`;
+                    msgDiv.style.display = "block";
+                    return false;
+                }
+                if (lines.length > 1 && seen.has(lines[i])) {
+                    msgDiv.textContent = `Duplicate query found at line ${i+1}: "${lines[i]}". Batch queries must be unique.`;
+                    msgDiv.style.display = "block";
+                    return false;
+                }
+                seen.add(lines[i]);
+            }
+            
+            msgDiv.style.display = "none";
+            return true;
+        }
+    </script>
 </body>
 </html>

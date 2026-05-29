@@ -70,6 +70,45 @@ class TestPredictorBatch:
             assert r["intent"] in VALID_INTENTS
             assert r["priority"] in VALID_PRIORITIES
 
+    def test_batch_chunking(self, predictor):
+        original_chunk_size = predictor.chunk_size
+        predictor.chunk_size = 2
+        try:
+            texts = ["Help 1", "Help 2", "Help 3", "Help 4", "Help 5"]
+            results = predictor.predict_batch(texts)
+            assert len(results) == 5
+            for r in results:
+                assert "intent" in r
+        finally:
+            predictor.chunk_size = original_chunk_size
+
+    def test_batch_error_isolation(self, predictor, monkeypatch):
+        def mock_predict_chunk(texts):
+            raise ValueError("Simulated batch model forward pass failure")
+            
+        monkeypatch.setattr(predictor, "_predict_chunk_vectorised", mock_predict_chunk)
+        
+        texts = ["Fallback test 1", "Fallback test 2"]
+        results = predictor.predict_batch(texts)
+        assert len(results) == 2
+        for r in results:
+            assert "error" not in r
+            assert r["intent"] in VALID_INTENTS
+            
+        def mock_predict(text):
+            raise RuntimeError("Individual query failed")
+            
+        monkeypatch.setattr(predictor, "predict", mock_predict)
+        
+        results = predictor.predict_batch(texts)
+        assert len(results) == 2
+        for r in results:
+            assert "error" in r
+            assert r["error"] == "Individual query failed"
+            assert r["intent"] == "unknown"
+            assert r["flagged"] is True
+
+
 
 class TestEdgeCases:
     def test_short_input(self, predictor):
