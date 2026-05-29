@@ -3,8 +3,9 @@ import logging
 from datetime import datetime, timezone
 from api.database import get_supabase
 from api.routes.predict import get_predictor, get_flag_manager
+from monitoring.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 async def start_query_classifier_worker():
     """Background task to poll the Supabase 'client_queries' table for unprocessed queries,
