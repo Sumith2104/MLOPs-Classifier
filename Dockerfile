@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api/ api/
 COPY model/ model/
 COPY monitoring/ monitoring/
-COPY training/ configs/ training/configs/
+COPY training/configs/ training/configs/
 
 # Expose port 8080 for SageMaker
 EXPOSE 8080
