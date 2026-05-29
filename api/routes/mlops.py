@@ -32,7 +32,7 @@ def get_analytics():
     db = get_supabase()
     if db:
         try:
-            res = db.table("predictions").select("intent, priority").execute()
+            res = db.table("classified_queries").select("intent, priority").execute()
             data = res.data
             counts["total"] = len(data)
             counts["complaints"] = sum(1 for row in data if row.get("intent") == "complaint")

@@ -7,7 +7,7 @@ from api.routes.predict import get_predictor, get_flag_manager
 logger = logging.getLogger(__name__)
 
 async def start_query_classifier_worker():
-    """Background task to poll the Supabase 'queries' table for unprocessed queries,
+    """Background task to poll the Supabase 'client_queries' table for unprocessed queries,
     classify them in batches, and save them in 'classified_queries'."""
     logger.info("Supabase queries background classifier worker started.")
     
@@ -20,8 +20,7 @@ async def start_query_classifier_worker():
                 continue
                 
             # 1. Fetch unprocessed queries (limit to 50 max batch size)
-            # We select 'message' column as per your existing schema
-            res = db.table("queries").select("id, message").eq("processed", False).limit(50).execute()
+            res = db.table("client_queries").select("id, message").eq("processed", False).limit(50).execute()
             rows = res.data if res else []
             
             if not rows:
@@ -34,7 +33,7 @@ async def start_query_classifier_worker():
             messages = [r["message"] for r in rows]
             
             # 2. Mark them as processed immediately to prevent duplicate classification
-            db.table("queries").update({"processed": True}).in_("id", row_ids).execute()
+            db.table("client_queries").update({"processed": True}).in_("id", row_ids).execute()
             
             # 3. Classify queries
             predictor = get_predictor()

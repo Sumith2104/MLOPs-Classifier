@@ -77,7 +77,7 @@ async def test_worker_processing_flow(monkeypatch):
         pass
         
     # Verify the database mock interactions
-    mock_db.table.assert_any_call("queries")
+    mock_db.table.assert_any_call("client_queries")
     mock_table.select.assert_any_call("id, message")
     mock_select.eq.assert_called_with("processed", False)
     

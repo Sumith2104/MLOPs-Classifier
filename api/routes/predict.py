@@ -120,12 +120,13 @@ def predict(request: QueryRequest):
     db = get_supabase()
     if db:
         try:
-            db.table("predictions").insert({
-                "query": query,
+            db.table("classified_queries").insert({
+                "message": query,
                 "intent": result["intent"],
                 "priority": result["priority"],
                 "intent_confidence": result["intent_confidence"],
-                "priority_confidence": result["priority_confidence"]
+                "priority_confidence": result["priority_confidence"],
+                "flagged": result["flagged"]
             }).execute()
         except Exception as exc:
             logger.error("Failed to log to Supabase", extra={"error": str(exc)})
@@ -233,11 +234,12 @@ async def predict_batch(request: BatchQueryRequest):
             )
             
             db_records.append({
-                "query": query,
+                "message": query,
                 "intent": res["intent"],
                 "priority": res["priority"],
                 "intent_confidence": res["intent_confidence"],
-                "priority_confidence": res["priority_confidence"]
+                "priority_confidence": res["priority_confidence"],
+                "flagged": res["flagged"]
             })
             
         prediction_responses.append(response_item)
@@ -247,7 +249,7 @@ async def predict_batch(request: BatchQueryRequest):
         db = get_supabase()
         if db:
             try:
-                db.table("predictions").insert(db_records).execute()
+                db.table("classified_queries").insert(db_records).execute()
             except Exception as exc:
                 logger.error("Failed to bulk log to Supabase", extra={"error": str(exc)})
                 
