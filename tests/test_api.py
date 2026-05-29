@@ -20,6 +20,13 @@ from api.main import app
 
 client = TestClient(app)
 
+@pytest.fixture(autouse=True)
+def mock_supabase_db(monkeypatch):
+    """Bypass Supabase calls during API integration tests."""
+    monkeypatch.setattr("api.routes.predict.get_supabase", lambda: None)
+    monkeypatch.setattr("api.routes.mlops.get_supabase", lambda: None)
+
+
 VALID_INTENTS    = {"complaint", "inquiry", "feedback"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 
