@@ -1,0 +1,13 @@
+venv/
+.venv/
+model/
+data/
+training/
+tests/
+api/
+Dockerfile
+monitoring/
+logs/
+.git/
+.gitignore
+python-3.12.8-amd64.exe

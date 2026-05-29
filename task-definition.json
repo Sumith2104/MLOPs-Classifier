@@ -1,0 +1,46 @@
+{
+  "family": "query-classifier-task",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "networkMode": "awsvpc",
+  "cpu": "2048",
+  "memory": "4096",
+  "executionRoleArn": "arn:aws:iam::954377119642:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "backend-container",
+      "image": "954377119642.dkr.ecr.ap-south-1.amazonaws.com/query-classifier-backend:latest",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "SUPABASE_URL",
+          "value": "https://cxmowfmjpctftybzvuzi.supabase.co"
+        },
+        {
+          "name": "SUPABASE_KEY",
+          "value": "sb_publishable_bWuvbq8PJwg_-hvu1sXMKw_RoYuq1am"
+        },
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "ecs/query-classifier",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "backend"
+        }
+      }
+    }
+  ]
+}
