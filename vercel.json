@@ -8,10 +8,6 @@
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
-      "dest": "/flask_ui/static/$1"
-    },
-    {
       "src": "/(.*)",
       "dest": "flask_ui/app.py"
     }
