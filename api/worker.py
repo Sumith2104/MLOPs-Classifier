@@ -21,7 +21,7 @@ async def start_query_classifier_worker():
                 continue
                 
             # 1. Fetch unprocessed queries (limit to 50 max batch size)
-            res = db.table("client_queries").select("id, message").eq("processed", False).limit(50).execute()
+            res = db.table("client_queries").select("id, message, client_app_id").eq("processed", False).limit(50).execute()
             rows = res.data if res else []
             
             if not rows:
@@ -32,6 +32,7 @@ async def start_query_classifier_worker():
             
             row_ids = [r["id"] for r in rows]
             messages = [r["message"] for r in rows]
+            client_app_ids = [r.get("client_app_id", "webapp") for r in rows]
             
             # 2. Mark them as processed immediately to prevent duplicate classification
             db.table("client_queries").update({"processed": True}).in_("id", row_ids).execute()
@@ -46,7 +47,7 @@ async def start_query_classifier_worker():
             # 4. Insert results into classified_queries
             classified_records = []
             
-            for row_id, message, res_item in zip(row_ids, messages, results):
+            for row_id, message, client_app_id, res_item in zip(row_ids, messages, client_app_ids, results):
                 is_error = "error" in res_item and res_item["error"] is not None
                 
                 flagged = True
@@ -64,7 +65,8 @@ async def start_query_classifier_worker():
                     "intent_confidence": res_item.get("intent_confidence") if not is_error else None,
                     "priority_confidence": res_item.get("priority_confidence") if not is_error else None,
                     "flagged": flagged,
-                    "error": res_item.get("error") if is_error else None
+                    "error": res_item.get("error") if is_error else None,
+                    "client_app_id": client_app_id
                 }
                 classified_records.append(record)
                 

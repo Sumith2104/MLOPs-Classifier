@@ -126,7 +126,8 @@ def predict(request: QueryRequest):
                 "priority": result["priority"],
                 "intent_confidence": result["intent_confidence"],
                 "priority_confidence": result["priority_confidence"],
-                "flagged": result["flagged"]
+                "flagged": result["flagged"],
+                "client_app_id": request.client_app_id
             }).execute()
         except Exception as exc:
             logger.error("Failed to log to Supabase", extra={"error": str(exc)})
@@ -146,6 +147,7 @@ def predict(request: QueryRequest):
     return PredictionResponse(
         query=query,
         timestamp=timestamp,
+        client_app_id=request.client_app_id,
         **result,
     )
 
@@ -219,19 +221,20 @@ async def predict_batch(request: BatchQueryRequest):
                 priority=None,
                 intent_confidence=None,
                 priority_confidence=None,
-                flagged=True
+                flagged=True,
+                client_app_id=request.client_app_id
             )
             flagged_count += 1
         else:
             is_flagged = flag_manager.check_and_log(query, res)
-            if is_flagged:
-                flagged_count += 1
-                
             response_item = PredictionResponse(
                 query=query,
                 timestamp=timestamp,
+                client_app_id=request.client_app_id,
                 **res
             )
+            if is_flagged:
+                flagged_count += 1
             
             db_records.append({
                 "message": query,
@@ -239,7 +242,8 @@ async def predict_batch(request: BatchQueryRequest):
                 "priority": res["priority"],
                 "intent_confidence": res["intent_confidence"],
                 "priority_confidence": res["priority_confidence"],
-                "flagged": res["flagged"]
+                "flagged": res["flagged"],
+                "client_app_id": request.client_app_id
             })
             
         prediction_responses.append(response_item)

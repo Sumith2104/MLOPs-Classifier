@@ -20,8 +20,8 @@ async def test_worker_processing_flow(monkeypatch):
     # Mock data returned by select().eq().limit().execute()
     # Using 'message' column to match existing database schema
     mock_queries = [
-        {"id": "uuid-1", "message": "My order arrived broken."},
-        {"id": "uuid-2", "message": "What are your store hours?"}
+        {"id": "uuid-1", "message": "My order arrived broken.", "client_app_id": "webapp"},
+        {"id": "uuid-2", "message": "What are your store hours?", "client_app_id": "mobile_app"}
     ]
     
     # Mock database queries and inserts
@@ -78,7 +78,7 @@ async def test_worker_processing_flow(monkeypatch):
         
     # Verify the database mock interactions
     mock_db.table.assert_any_call("client_queries")
-    mock_table.select.assert_any_call("id, message")
+    mock_table.select.assert_any_call("id, message, client_app_id")
     mock_select.eq.assert_called_with("processed", False)
     
     # Verify rows were marked as processed
@@ -93,7 +93,9 @@ async def test_worker_processing_flow(monkeypatch):
     assert inserted_args[0]["message"] == "My order arrived broken."
     assert inserted_args[0]["intent"] == "complaint"
     assert inserted_args[0]["priority"] == "high"
+    assert inserted_args[0]["client_app_id"] == "webapp"
     assert inserted_args[1]["query_id"] == "uuid-2"
     assert inserted_args[1]["message"] == "What are your store hours?"
     assert inserted_args[1]["intent"] == "inquiry"
     assert inserted_args[1]["priority"] == "low"
+    assert inserted_args[1]["client_app_id"] == "mobile_app"

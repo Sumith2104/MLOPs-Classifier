@@ -20,6 +20,11 @@ class QueryRequest(BaseModel):
         description="Raw customer support query text",
         examples=["My order never arrived and it has been 2 weeks!"],
     )
+    client_app_id: str = Field(
+        default="webapp",
+        description="ID of the client application submitting the query",
+        examples=["webapp", "mobile_app", "agent_console"]
+    )
 
 
 class PredictionResponse(BaseModel):
@@ -31,6 +36,7 @@ class PredictionResponse(BaseModel):
     flagged:             Optional[bool]  = Field(default=None, description="True if either confidence < threshold")
     timestamp:           str   = Field(description="ISO 8601 prediction timestamp")
     error:               Optional[str]   = Field(default=None, description="Error message if prediction failed")
+    client_app_id:       Optional[str]   = Field(default="webapp", description="ID of the client application")
 
 
 class HealthResponse(BaseModel):
@@ -43,6 +49,11 @@ class BatchQueryRequest(BaseModel):
         ...,
         description="List of raw customer support query texts",
         examples=[["My order is damaged.", "Where is my package?", "Excellent service!"]],
+    )
+    client_app_id: str = Field(
+        default="webapp",
+        description="ID of the client application submitting the batch",
+        examples=["webapp", "mobile_app", "agent_console"]
     )
 
     @field_validator("queries")

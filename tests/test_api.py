@@ -64,7 +64,7 @@ class TestPredict:
         resp = client.post("/predict", json={"query": "What is your refund policy?"})
         body = resp.json()
         for field in ["query", "intent", "priority", "intent_confidence",
-                      "priority_confidence", "flagged", "timestamp"]:
+                      "priority_confidence", "flagged", "timestamp", "client_app_id"]:
             assert field in body, f"Missing field: {field}"
 
     def test_intent_is_valid(self):

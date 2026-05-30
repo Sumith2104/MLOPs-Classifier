@@ -33,6 +33,17 @@
                 <form method="POST" action="/" onsubmit="return validateForm()">
                     <label for="queries">Enter customer queries (one per line for multiple queries, max 50):</label>
                     <textarea name="queries" id="queries" rows="6" placeholder="e.g.,&#10;My order arrived broken and I want a refund immediately!&#10;How do I change my billing info?" required>{{ queries_raw or query or '' }}</textarea>
+                    
+                    <div class="client-app-container" style="margin-top: 14px; margin-bottom: 14px;">
+                        <label for="client_app_id" style="font-weight: 500; font-size: 0.9rem; margin-bottom: 6px; display: block;">Select Client App (Metadata):</label>
+                        <select name="client_app_id" id="client_app_id" class="input-select" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;">
+                            <option value="webapp">Web Portal (Default)</option>
+                            <option value="mobile_app">Mobile Application</option>
+                            <option value="api_gateway">API Gateway</option>
+                            <option value="agent_console">Agent Support Console</option>
+                        </select>
+                    </div>
+
                     <div id="validation-msg" class="validation-msg"></div>
                     <button type="submit" class="btn">Analyze Query</button>
                 </form>
@@ -56,6 +67,10 @@
                     <div class="metric">
                         <span class="label">Priority</span>
                         <span class="value badge badge-priority-{{ prediction.priority }}">{{ prediction.priority | capitalize }}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Source Client</span>
+                        <span class="value badge" style="background-color: var(--text-muted); color: #ffffff;">{{ prediction.client_app_id | upper }}</span>
                     </div>
                 </div>
 
@@ -128,6 +143,7 @@
                                 <th>Query</th>
                                 <th>Intent (Confidence)</th>
                                 <th>Priority (Confidence)</th>
+                                <th>Client</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -155,6 +171,9 @@
                                     <span class="conf-text">{{ "%.1f"|format((item.priority_confidence or 0) * 100) }}%</span>
                                 </td>
                                 {% endif %}
+                                <td>
+                                    <span class="status-badge" style="background-color: #f1f3f5; color: #495057; border: 1px solid #dee2e6; font-size: 0.75rem; font-weight: 500;">{{ item.client_app_id | upper }}</span>
+                                </td>
                                 <td>
                                     {% if item.flagged %}
                                         {% if item.error %}

@@ -19,6 +19,7 @@ def index():
 
     if request.method == "POST":
         queries_raw = request.form.get("queries", "").strip()
+        client_app_id = request.form.get("client_app_id", "webapp").strip()
         if not queries_raw:
             queries_raw = request.form.get("query", "").strip()
             
@@ -30,7 +31,10 @@ def index():
             elif len(lines) == 1:
                 query = lines[0]
                 try:
-                    response = requests.post(API_URL, json={"query": query})
+                    response = requests.post(API_URL, json={
+                        "query": query,
+                        "client_app_id": client_app_id
+                    })
                     if response.status_code == 429:
                         detail = response.json().get("detail", "Rate limit exceeded.")
                         error = f"Rate Limit Exceeded: {detail}"
@@ -41,7 +45,10 @@ def index():
                     error = f"Error connecting to the API: {e}"
             else:
                 try:
-                    response = requests.post(f"{BASE_API_URL}/predict/batch", json={"queries": lines})
+                    response = requests.post(f"{BASE_API_URL}/predict/batch", json={
+                        "queries": lines,
+                        "client_app_id": client_app_id
+                    })
                     
                     if response.status_code == 429:
                         detail = response.json().get("detail", "Rate limit or concurrency limit exceeded.")
